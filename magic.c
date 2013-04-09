@@ -142,9 +142,9 @@ static int magic_setflags_lua( lua_State *L )
     MagicLua_t *wrap = luaL_checkudata( L, 1, MAGIC_LUA );
     int flgs = MAGIC_NONE;
     
-    if( argc > 0 )
+    if( argc > 1 )
     {
-        int i = 1;
+        int i = 2;
         
         for(; i <= argc; i++ ){
             flgs |= luaL_checkinteger( L, i );
