@@ -240,7 +240,7 @@ LUALIB_API int luaopen_magic( lua_State *L )
     setL_tfunction( L, "file", magic_file_lua );
     setL_tfunction( L, "descriptor", magic_descriptor_lua );
     setL_tfunction( L, "error", magic_error_lua );
-    setL_tfunction( L, "setflags", magic_setflags_lua );
+    setL_tfunction( L, "setFlags", magic_setflags_lua );
     setL_tfunction( L, "load", magic_load_lua );
     setL_tfunction( L, "compile", magic_compile_lua );
     setL_tfunction( L, "check", magic_check_lua );
@@ -283,7 +283,7 @@ LUALIB_API int luaopen_magic( lua_State *L )
     setL_flag( L, NO_CHECK_FORTRAN );
     setL_flag( L, NO_CHECK_TROFF );
     // register: functions
-    setL_tfunction( L, "getpath", magic_getpath_lua );
+    setL_tfunction( L, "getPath", magic_getpath_lua );
     setL_tfunction( L, "open", magic_open_lua );
 
     return 1;
