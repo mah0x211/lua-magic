@@ -1,7 +1,7 @@
 package = "magic"
 version = "scm-1"
 source = {
-    url = "https://github.com/mah0x211/lua-magic.git"
+    url = "git://github.com/mah0x211/lua-magic.git"
 }
 description = {
     summary = "bindings for libmagic",
