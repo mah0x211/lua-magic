@@ -55,13 +55,13 @@ see `man libmagic` for more details.
     magic.open( ...:constants );
 
 ### instance methods
-    mgc.file( path:string );
-    mgc.descriptor( fd:integer );
-    mgc.error();
-    mgc.setflags( ...:constants );
-    mgc.load( path:string );
-    mgc.compile( path:string );
-    mgc.check( path:string );
-    mgc.list();
-    mgc.errno();
+    mgc:file( path:string );
+    mgc:descriptor( fd:integer );
+    mgc:error();
+    mgc:setflags( [...:constants] );
+    mgc:load( path:string );
+    mgc:compile( path:string );
+    mgc:check( path:string );
+    mgc:list();
+    mgc:errno();
 
