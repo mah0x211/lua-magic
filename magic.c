@@ -32,114 +32,58 @@
 #include "magic.h"
 
 // MARK: lua binding
-#define MAGIC_LUA        "magic"
-
-// open table to table-field(nested table)
-#define openL_ttable(L,k) \
-    lua_pushstring(L,k); \
-    lua_newtable(L)
-
-// close table
-#define closeL_ttable(L)    lua_rawset(L,-3)
+#define MODULE_MT   "magic"
 
 // set function at table-field
-#define setL_tfunction(L,k,v) \
+#define lstate_fn2tbl(L,k,v) do{ \
     lua_pushstring(L,k); \
     lua_pushcfunction(L,v); \
-    lua_rawset(L,-3)
+    lua_rawset(L,-3); \
+}while(0)
 
-#define setL_flag(L,flg) \
+#define lstate_flag2tbl(L,flg) \
     lua_pushstring(L,#flg); \
     lua_pushinteger(L, MAGIC_##flg); \
     lua_rawset(L,-3)
 
 typedef struct {
-    magic_t magic;
-} MagicLua_t;
+    magic_t mgc;
+} lmagic_t;
 
-static int magic_getpath_lua( lua_State *L )
+
+static int file_lua( lua_State *L )
 {
-    lua_pushstring( L, magic_getpath( NULL, 0 ) );
-    
-    return 1;
-}
-
-static int magic_open_lua( lua_State *L )
-{
-    int argc = lua_gettop( L );
-    int flgs = MAGIC_NONE;
-    magic_t magic = NULL;
-    MagicLua_t *wrap = NULL;
-    const char *errbuf = NULL;
-    
-    if( argc > 0 )
-    {
-        int i = 1;
-        
-        for(; i <= argc; i++ ){
-            flgs |= luaL_checkinteger( L, i );
-        }
-    }
-    
-    if( !( magic = magic_open( flgs ) ) ){
-        errbuf = strerror( errno );
-    }
-    else if( !( wrap = lua_newuserdata( L, sizeof( MagicLua_t ) ) ) ){
-        errbuf = lua_tostring( L, -1 );
-        magic_close( magic );
-    }
-    else {
-        wrap->magic = magic;
-        luaL_getmetatable( L, MAGIC_LUA );
-        lua_setmetatable( L, -2 );
-        return 1;
-    }
-
-    return luaL_error( L, "failed to magic.open() - %s", errbuf );
-}
-
-static int magic_close_lua( lua_State *L )
-{
-    MagicLua_t *wrap = lua_touserdata( L, 1 );
-    
-    magic_close( wrap->magic );
-    
-    return 0;
-}
-
-static int magic_file_lua( lua_State *L )
-{
-    MagicLua_t *wrap = luaL_checkudata( L, 1, MAGIC_LUA );
+    lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
     const char *path = luaL_checkstring( L, 2 );
     
-    lua_pushstring( L, magic_file( wrap->magic, path ) );
+    lua_pushstring( L, magic_file( magic->mgc, path ) );
     
     return 1;
 }
 
-static int magic_descriptor_lua( lua_State *L )
+static int descriptor_lua( lua_State *L )
 {
-    MagicLua_t *wrap = luaL_checkudata( L, 1, MAGIC_LUA );
+    lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
     int fd = luaL_checkinteger( L, 2 );
     
-    lua_pushstring( L, magic_descriptor( wrap->magic, fd ) );
+    lua_pushstring( L, magic_descriptor( magic->mgc, fd ) );
     
     return 1;
 }
 
-static int magic_error_lua( lua_State *L )
+static int error_lua( lua_State *L )
 {
-    MagicLua_t *wrap = luaL_checkudata( L, 1, MAGIC_LUA );
+    lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
     
-    lua_pushstring( L, magic_error( wrap->magic ) );
+    lua_pushstring( L, magic_error( magic->mgc ) );
     
     return 1;
 }
 
-static int magic_setflags_lua( lua_State *L )
+static int setflags_lua( lua_State *L )
 {
     int argc = lua_gettop( L );
-    MagicLua_t *wrap = luaL_checkudata( L, 1, MAGIC_LUA );
+    lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
     int flgs = MAGIC_NONE;
     
     if( argc > 1 )
@@ -151,140 +95,229 @@ static int magic_setflags_lua( lua_State *L )
         }
     }
     
-    lua_pushinteger( L, magic_setflags( wrap->magic, flgs ) );
+    lua_pushinteger( L, magic_setflags( magic->mgc, flgs ) );
     
     return 1;
 }
 
-static int magic_load_lua( lua_State *L )
+static int load_lua( lua_State *L )
 {
     int argc = lua_gettop( L );
-    MagicLua_t *wrap = luaL_checkudata( L, 1, MAGIC_LUA );
+    lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
     const char *path = NULL;
     
     if( argc > 1 ){
         path = luaL_checkstring( L, 2 );
     }
     
-    lua_pushinteger( L, magic_load( wrap->magic, path ) );
+    lua_pushinteger( L, magic_load( magic->mgc, path ) );
     
     return 1;
 }
 
-static int magic_compile_lua( lua_State *L )
+static int compile_lua( lua_State *L )
 {
     int argc = lua_gettop( L );
-    MagicLua_t *wrap = luaL_checkudata( L, 1, MAGIC_LUA );
+    lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
     const char *path = NULL;
     
     if( argc > 1 ){
         path = luaL_checkstring( L, 2 );
     }
     
-    lua_pushinteger( L, magic_compile( wrap->magic, path ) );
+    lua_pushinteger( L, magic_compile( magic->mgc, path ) );
     
     return 1;
 }
 
-static int magic_check_lua( lua_State *L )
+static int check_lua( lua_State *L )
 {
     int argc = lua_gettop( L );
-    MagicLua_t *wrap = luaL_checkudata( L, 1, MAGIC_LUA );
+    lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
     const char *path = NULL;
     
     if( argc > 1 ){
         path = luaL_checkstring( L, 2 );
     }
     
-    lua_pushinteger( L, magic_check( wrap->magic, path ) );
+    lua_pushinteger( L, magic_check( magic->mgc, path ) );
     
     return 1;
 }
 
-static int magic_list_lua( lua_State *L )
+static int list_lua( lua_State *L )
 {
     int argc = lua_gettop( L );
-    MagicLua_t *wrap = luaL_checkudata( L, 1, MAGIC_LUA );
+    lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
     const char *path = NULL;
     
     if( argc > 1 ){
         path = luaL_checkstring( L, 2 );
     }
     
-    lua_pushinteger( L, magic_list( wrap->magic, path ) );
+    lua_pushinteger( L, magic_list( magic->mgc, path ) );
     
     return 1;
 }
 
-static int magic_errno_lua( lua_State *L )
+static int errno_lua( lua_State *L )
 {
-    MagicLua_t *wrap = luaL_checkudata( L, 1, MAGIC_LUA );
+    lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
     
-    lua_pushinteger( L, magic_errno( wrap->magic ) );
+    lua_pushinteger( L, magic_errno( magic->mgc ) );
     
+    return 1;
+}
+
+
+static int gc_lua( lua_State *L )
+{
+    lmagic_t *magic = lua_touserdata( L, 1 );
+    
+    magic_close( magic->mgc );
+    
+    return 0;
+}
+
+static int tostring_lua( lua_State *L )
+{
+    lua_pushfstring( L, MODULE_MT ": %p", lua_touserdata( L, 1 ) );
     return 1;
 }
 
 // make error
-static int const_newindex( lua_State *L ){
+static int newindex_lua( lua_State *L ){
     return luaL_error( L, "could not change member of instance" );
 }
+
+
+static void define_mt( lua_State *L, struct luaL_Reg mmethod[], 
+                       struct luaL_Reg method[] )
+{
+    int i = 0;
     
+    // create table __metatable
+    luaL_newmetatable( L, MODULE_MT );
+    // metamethods
+    while( mmethod[i].name ){
+        lstate_fn2tbl( L, mmethod[i].name, mmethod[i].func );
+        i++;
+    }
+    // methods
+    lua_pushstring( L, "__index" );
+    lua_newtable( L );
+    i = 0;
+    while( method[i].name ){
+        lstate_fn2tbl( L, method[i].name, method[i].func );
+        i++;
+    }
+    lua_rawset( L, -3 );
+    lua_pop( L, 1 );
+}
+
+
+static int getpath_lua( lua_State *L )
+{
+    lua_pushstring( L, magic_getpath( NULL, 0 ) );
+    
+    return 1;
+}
+
+static int open_lua( lua_State *L )
+{
+    int argc = lua_gettop( L );
+    int flgs = MAGIC_NONE;
+    lmagic_t *magic = NULL;
+    magic_t mgc = NULL;
+    const char *errbuf = NULL;
+    
+    if( argc > 0 )
+    {
+        int i = 1;
+        
+        for(; i <= argc; i++ ){
+            flgs |= luaL_checkinteger( L, i );
+        }
+    }
+    
+    if( !( mgc = magic_open( flgs ) ) ){
+        errbuf = strerror( errno );
+    }
+    else if( !( magic = lua_newuserdata( L, sizeof( lmagic_t ) ) ) ){
+        errbuf = lua_tostring( L, -1 );
+        magic_close( mgc );
+    }
+    else {
+        magic->mgc = mgc;
+        luaL_getmetatable( L, MODULE_MT );
+        lua_setmetatable( L, -2 );
+        return 1;
+    }
+
+    return luaL_error( L, "failed to magic.open() - %s", errbuf );
+}
+
+
 LUALIB_API int luaopen_magic( lua_State *L )
 {
-    int top = lua_gettop( L );
+    struct luaL_Reg mmethod[] = {
+        { "__gc", gc_lua },
+        { "__tostring", tostring_lua },
+        { "__newindex", newindex_lua },
+        { NULL, NULL }
+    };
+    struct luaL_Reg method[] = {
+        // method
+        { "file", file_lua },
+        { "descriptor", descriptor_lua },
+        { "error", error_lua },
+        { "setFlags", setflags_lua },
+        { "load", load_lua },
+        { "compile", compile_lua },
+        { "check", check_lua },
+        { "list", list_lua },
+        { "errno", errno_lua },
+        { NULL, NULL }
+    };
     
     // create metatable
-    luaL_newmetatable( L, MAGIC_LUA );
-    openL_ttable( L, "__index" );
-    setL_tfunction( L, "file", magic_file_lua );
-    setL_tfunction( L, "descriptor", magic_descriptor_lua );
-    setL_tfunction( L, "error", magic_error_lua );
-    setL_tfunction( L, "setFlags", magic_setflags_lua );
-    setL_tfunction( L, "load", magic_load_lua );
-    setL_tfunction( L, "compile", magic_compile_lua );
-    setL_tfunction( L, "check", magic_check_lua );
-    setL_tfunction( L, "list", magic_list_lua );
-    setL_tfunction( L, "errno", magic_errno_lua );
-    closeL_ttable( L );
-    setL_tfunction( L, "__gc", magic_close_lua );
-    setL_tfunction( L, "__newindex", const_newindex );
-    lua_settop( L, top );
+    define_mt( L, mmethod, method );
     
-    // register: flags
+    // register
     lua_newtable( L );
-    setL_flag( L, NONE );
-    setL_flag( L, DEBUG );
-    setL_flag( L, SYMLINK );
-    setL_flag( L, COMPRESS );
-    setL_flag( L, DEVICES );
-    setL_flag( L, MIME_TYPE );
-    setL_flag( L, CONTINUE );
-    setL_flag( L, CHECK );
-    setL_flag( L, PRESERVE_ATIME );
-    setL_flag( L, RAW );
-    setL_flag( L, ERROR );
-    setL_flag( L, MIME_ENCODING );
-    setL_flag( L, MIME );
-    setL_flag( L, APPLE );
+    // functions
+    lstate_fn2tbl( L, "getPath", getpath_lua );
+    lstate_fn2tbl( L, "open", open_lua );
+    // flags
+    lstate_flag2tbl( L, NONE );
+    lstate_flag2tbl( L, DEBUG );
+    lstate_flag2tbl( L, SYMLINK );
+    lstate_flag2tbl( L, COMPRESS );
+    lstate_flag2tbl( L, DEVICES );
+    lstate_flag2tbl( L, MIME_TYPE );
+    lstate_flag2tbl( L, CONTINUE );
+    lstate_flag2tbl( L, CHECK );
+    lstate_flag2tbl( L, PRESERVE_ATIME );
+    lstate_flag2tbl( L, RAW );
+    lstate_flag2tbl( L, ERROR );
+    lstate_flag2tbl( L, MIME_ENCODING );
+    lstate_flag2tbl( L, MIME );
+    lstate_flag2tbl( L, APPLE );
     
-    setL_flag( L, NO_CHECK_COMPRESS );
-    setL_flag( L, NO_CHECK_TAR );
-    setL_flag( L, NO_CHECK_SOFT );
-    setL_flag( L, NO_CHECK_APPTYPE );
-    setL_flag( L, NO_CHECK_ELF );
-    setL_flag( L, NO_CHECK_TEXT );
-    setL_flag( L, NO_CHECK_CDF );
-    setL_flag( L, NO_CHECK_TOKENS );
-    setL_flag( L, NO_CHECK_ENCODING );
+    lstate_flag2tbl( L, NO_CHECK_COMPRESS );
+    lstate_flag2tbl( L, NO_CHECK_TAR );
+    lstate_flag2tbl( L, NO_CHECK_SOFT );
+    lstate_flag2tbl( L, NO_CHECK_APPTYPE );
+    lstate_flag2tbl( L, NO_CHECK_ELF );
+    lstate_flag2tbl( L, NO_CHECK_TEXT );
+    lstate_flag2tbl( L, NO_CHECK_CDF );
+    lstate_flag2tbl( L, NO_CHECK_TOKENS );
+    lstate_flag2tbl( L, NO_CHECK_ENCODING );
     // backwards copatibility(rename)
-    setL_flag( L, NO_CHECK_ASCII );
+    lstate_flag2tbl( L, NO_CHECK_ASCII );
     // backwards copatibility(do nothing)
-    setL_flag( L, NO_CHECK_FORTRAN );
-    setL_flag( L, NO_CHECK_TROFF );
-    // register: functions
-    setL_tfunction( L, "getPath", magic_getpath_lua );
-    setL_tfunction( L, "open", magic_open_lua );
+    lstate_flag2tbl( L, NO_CHECK_FORTRAN );
+    lstate_flag2tbl( L, NO_CHECK_TROFF );
 
     return 1;
 }
