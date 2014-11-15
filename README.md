@@ -6,7 +6,19 @@ see `man libmagic` for more details.
 
 ***
 
-### example
+## Dependencies
+
+- libmagic: https://github.com/file/file
+
+
+## Installation
+
+```sh
+luarocks install --from=http://mah0x211.github.io/rocks/ magic
+```
+
+
+## example
 
     local magic = require('magic');
     local mgc = magic.open( magic.MIME_TYPE, magic.NO_CHECK_COMPRESS );
