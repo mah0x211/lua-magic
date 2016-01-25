@@ -18,8 +18,8 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
- */
-/*
+ *
+ *
  *  magic.c
  *  lua-magic
  *
@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <lauxlib.h>
 #include "magic.h"
+#include "config.h"
 
 // MARK: lua binding
 #define MODULE_MT   "magic"
@@ -104,7 +105,7 @@ static int load_lua( lua_State *L )
 {
     int argc = lua_gettop( L );
     lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
-    const char *path = NULL;
+    const char *path = DEFAULT_LUA_MAGIC_FILE;
     
     if( argc > 1 ){
         path = luaL_checkstring( L, 2 );
@@ -134,7 +135,7 @@ static int check_lua( lua_State *L )
 {
     int argc = lua_gettop( L );
     lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
-    const char *path = NULL;
+    const char *path = DEFAULT_LUA_MAGIC_FILE;
     
     if( argc > 1 ){
         path = luaL_checkstring( L, 2 );
@@ -149,7 +150,7 @@ static int list_lua( lua_State *L )
 {
     int argc = lua_gettop( L );
     lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
-    const char *path = NULL;
+    const char *path = DEFAULT_LUA_MAGIC_FILE;
     
     if( argc > 1 ){
         path = luaL_checkstring( L, 2 );
@@ -218,7 +219,7 @@ static void define_mt( lua_State *L, struct luaL_Reg mmethod[],
 
 static int getpath_lua( lua_State *L )
 {
-    lua_pushstring( L, magic_getpath( NULL, 0 ) );
+    lua_pushstring( L, magic_getpath( DEFAULT_LUA_MAGIC_FILE, 0 ) );
     
     return 1;
 }

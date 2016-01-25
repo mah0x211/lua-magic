@@ -1,0 +1,3 @@
+[submodule "deps/file"]
+	path = deps/file
+	url = https://github.com/mah0x211/file.git
