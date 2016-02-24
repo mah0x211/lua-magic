@@ -1,21 +1,22 @@
 CC=@CC@
-CFLAGS=@CFLAGS@ -Wall -Wno-trigraphs -Wmissing-field-initializers -Wmissing-prototypes -Wreturn-type -Wmissing-braces -Wparentheses -Wswitch -Wunused-function -Wunused-label -Wunused-parameter -Wunused-variable -Wunused-value -Wuninitialized -Wunknown-pragmas -Wshadow -Wsign-compare
+CFLAGS=@CFLAGS@
+WARNINGS=-Wall -Wno-trigraphs -Wmissing-field-initializers -Wmissing-prototypes -Wreturn-type -Wmissing-braces -Wparentheses -Wswitch -Wunused-function -Wunused-label -Wunused-parameter -Wunused-variable -Wunused-value -Wuninitialized -Wunknown-pragmas -Wshadow -Wsign-compare
 CPPFLAGS=-I. -I../deps/file/src @CPPFLAGS@
 LDFLAGS=@LIBFLAG@
-LIBS=@LIBS@ ../deps/file/src/.libs/libmagic.a
+LIBS=@LIBS@
 TARGET=@PACKAGE@.@LIB_EXTENSION@
-SRC=$(wildcard *.c)
-OBJ=$(SRC:.c=.@OBJ_EXTENSION@)
+SRCS=$(wildcard *.c)
+OBJS=$(SRCS:.c=.@OBJ_EXTENSION@)
 LIBDIR=@LIBDIR@
 
 
-all: $(OBJ) $(TARGET)
+all: $(TARGET)
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $^
+	$(CC) $(CFLAGS) $(WARNINGS) $(CPPFLAGS) -c $^
 
-$(TARGET): 
-	$(CC) $(LDFLAGS) $(LIBS) -o $@ *.o
+$(TARGET): $(OBJS)
+	$(CC) -o $@ $^ ../deps/file/src/.libs/libmagic.a $(LDFLAGS) $(LIBS)
 
 install:
 	mkdir -p $(LIBDIR)
