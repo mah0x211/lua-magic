@@ -69,6 +69,7 @@ luarocks install --from=http://mah0x211.github.io/rocks/ magic
 ### instance methods
     mgc:file( path:string );
     mgc:descriptor( fd:integer );
+    mgc:buffer( buffer:string );
     mgc:error();
     mgc:setflags( [...:constants] );
     mgc:load( path:string );
