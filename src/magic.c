@@ -72,6 +72,17 @@ static int descriptor_lua( lua_State *L )
     return 1;
 }
 
+static int buffer_lua( lua_State *L )
+{
+    size_t size;
+    lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
+    const char *buf = luaL_checklstring( L, 2, &size );
+
+    lua_pushstring(L, magic_buffer( magic->mgc, buf, size ) );
+
+    return 1;
+}
+
 static int error_lua( lua_State *L )
 {
     lmagic_t *magic = luaL_checkudata( L, 1, MODULE_MT );
@@ -271,6 +282,7 @@ LUALIB_API int luaopen_magic( lua_State *L )
         // method
         { "file", file_lua },
         { "descriptor", descriptor_lua },
+        { "buffer", buffer_lua },
         { "error", error_lua },
         { "setFlags", setflags_lua },
         { "load", load_lua },
