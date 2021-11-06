@@ -33,18 +33,19 @@
 // MARK: lua binding
 #define MODULE_MT "magic"
 
-// set function at table-field
-#define lstate_fn2tbl(L, k, v)                                                 \
- do {                                                                          \
-  lua_pushstring(L, k);                                                        \
-  lua_pushcfunction(L, v);                                                     \
-  lua_rawset(L, -3);                                                           \
- } while (0)
+static inline void push_fn2tbl(lua_State *L, const char *k, lua_CFunction f)
+{
+    lua_pushstring(L, k);
+    lua_pushcfunction(L, f);
+    lua_rawset(L, -3);
+}
 
-#define lstate_flag2tbl(L, flg)                                                \
- lua_pushstring(L, #flg);                                                      \
- lua_pushinteger(L, MAGIC_##flg);                                              \
- lua_rawset(L, -3)
+static inline void push_int2tbl(lua_State *L, const char *k, lua_Integer v)
+{
+    lua_pushstring(L, k);
+    lua_pushinteger(L, v);
+    lua_rawset(L, -3);
+}
 
 typedef struct {
     magic_t mgc;
@@ -208,7 +209,7 @@ static void define_mt(lua_State *L, struct luaL_Reg mmethod[],
     luaL_newmetatable(L, MODULE_MT);
     // metamethods
     while (mmethod[i].name) {
-        lstate_fn2tbl(L, mmethod[i].name, mmethod[i].func);
+        push_fn2tbl(L, mmethod[i].name, mmethod[i].func);
         i++;
     }
     // methods
@@ -216,7 +217,7 @@ static void define_mt(lua_State *L, struct luaL_Reg mmethod[],
     lua_newtable(L);
     i = 0;
     while (method[i].name) {
-        lstate_fn2tbl(L, method[i].name, method[i].func);
+        push_fn2tbl(L, method[i].name, method[i].func);
         i++;
     }
     lua_rawset(L, -3);
@@ -290,38 +291,38 @@ LUALIB_API int luaopen_magic(lua_State *L)
     // register
     lua_newtable(L);
     // functions
-    lstate_fn2tbl(L, "getPath", getpath_lua);
-    lstate_fn2tbl(L, "open", open_lua);
+    push_fn2tbl(L, "getPath", getpath_lua);
+    push_fn2tbl(L, "open", open_lua);
     // flags
-    lstate_flag2tbl(L, NONE);
-    lstate_flag2tbl(L, DEBUG);
-    lstate_flag2tbl(L, SYMLINK);
-    lstate_flag2tbl(L, COMPRESS);
-    lstate_flag2tbl(L, DEVICES);
-    lstate_flag2tbl(L, MIME_TYPE);
-    lstate_flag2tbl(L, CONTINUE);
-    lstate_flag2tbl(L, CHECK);
-    lstate_flag2tbl(L, PRESERVE_ATIME);
-    lstate_flag2tbl(L, RAW);
-    lstate_flag2tbl(L, ERROR);
-    lstate_flag2tbl(L, MIME_ENCODING);
-    lstate_flag2tbl(L, MIME);
-    lstate_flag2tbl(L, APPLE);
+    push_int2tbl(L, "NONE", MAGIC_NONE);
+    push_int2tbl(L, "DEBUG", MAGIC_DEBUG);
+    push_int2tbl(L, "SYMLINK", MAGIC_SYMLINK);
+    push_int2tbl(L, "COMPRESS", MAGIC_COMPRESS);
+    push_int2tbl(L, "DEVICES", MAGIC_DEVICES);
+    push_int2tbl(L, "MIME_TYPE", MAGIC_MIME_TYPE);
+    push_int2tbl(L, "CONTINUE", MAGIC_CONTINUE);
+    push_int2tbl(L, "CHECK", MAGIC_CHECK);
+    push_int2tbl(L, "PRESERVE_ATIME", MAGIC_PRESERVE_ATIME);
+    push_int2tbl(L, "RAW", MAGIC_RAW);
+    push_int2tbl(L, "ERROR", MAGIC_ERROR);
+    push_int2tbl(L, "MIME_ENCODING", MAGIC_MIME_ENCODING);
+    push_int2tbl(L, "MIME", MAGIC_MIME);
+    push_int2tbl(L, "APPLE", MAGIC_APPLE);
 
-    lstate_flag2tbl(L, NO_CHECK_COMPRESS);
-    lstate_flag2tbl(L, NO_CHECK_TAR);
-    lstate_flag2tbl(L, NO_CHECK_SOFT);
-    lstate_flag2tbl(L, NO_CHECK_APPTYPE);
-    lstate_flag2tbl(L, NO_CHECK_ELF);
-    lstate_flag2tbl(L, NO_CHECK_TEXT);
-    lstate_flag2tbl(L, NO_CHECK_CDF);
-    lstate_flag2tbl(L, NO_CHECK_TOKENS);
-    lstate_flag2tbl(L, NO_CHECK_ENCODING);
+    push_int2tbl(L, "NO_CHECK_COMPRESS", MAGIC_NO_CHECK_COMPRESS);
+    push_int2tbl(L, "NO_CHECK_TAR", MAGIC_NO_CHECK_TAR);
+    push_int2tbl(L, "NO_CHECK_SOFT", MAGIC_NO_CHECK_SOFT);
+    push_int2tbl(L, "NO_CHECK_APPTYPE", MAGIC_NO_CHECK_APPTYPE);
+    push_int2tbl(L, "NO_CHECK_ELF", MAGIC_NO_CHECK_ELF);
+    push_int2tbl(L, "NO_CHECK_TEXT", MAGIC_NO_CHECK_TEXT);
+    push_int2tbl(L, "NO_CHECK_CDF", MAGIC_NO_CHECK_CDF);
+    push_int2tbl(L, "NO_CHECK_TOKENS", MAGIC_NO_CHECK_TOKENS);
+    push_int2tbl(L, "NO_CHECK_ENCODING", MAGIC_NO_CHECK_ENCODING);
     // backwards copatibility(rename)
-    lstate_flag2tbl(L, NO_CHECK_ASCII);
+    push_int2tbl(L, "NO_CHECK_ASCII", MAGIC_NO_CHECK_ASCII);
     // backwards copatibility(do nothing)
-    lstate_flag2tbl(L, NO_CHECK_FORTRAN);
-    lstate_flag2tbl(L, NO_CHECK_TROFF);
+    push_int2tbl(L, "NO_CHECK_FORTRAN", MAGIC_NO_CHECK_FORTRAN);
+    push_int2tbl(L, "NO_CHECK_TROFF", MAGIC_NO_CHECK_TROFF);
 
     return 1;
 }
