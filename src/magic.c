@@ -304,7 +304,7 @@ LUALIB_API int luaopen_magic(lua_State *L)
     // register
     lua_newtable(L);
     // functions
-    push_fn2tbl(L, "getPath", getpath_lua);
+    push_fn2tbl(L, "getpath", getpath_lua);
     push_fn2tbl(L, "open", open_lua);
     // flags
     push_int2tbl(L, "NONE", MAGIC_NONE);
