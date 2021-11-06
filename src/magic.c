@@ -236,7 +236,6 @@ static int open_lua(lua_State *L)
     int argc           = lua_gettop(L);
     int flgs           = MAGIC_NONE;
     lmagic_t *magic    = NULL;
-    magic_t mgc        = NULL;
     const char *errbuf = NULL;
 
     if (argc > 0) {
