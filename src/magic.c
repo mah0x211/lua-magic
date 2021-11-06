@@ -302,6 +302,7 @@ LUALIB_API int luaopen_magic(lua_State *L)
     push_int2tbl(L, "MIME_ENCODING", MAGIC_MIME_ENCODING);
     push_int2tbl(L, "MIME", MAGIC_MIME);
     push_int2tbl(L, "APPLE", MAGIC_APPLE);
+    push_int2tbl(L, "EXTENSION", MAGIC_EXTENSION);
 
     push_int2tbl(L, "NO_CHECK_COMPRESS", MAGIC_NO_CHECK_COMPRESS);
     push_int2tbl(L, "NO_CHECK_TAR", MAGIC_NO_CHECK_TAR);
