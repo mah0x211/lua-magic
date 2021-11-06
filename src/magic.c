@@ -73,7 +73,7 @@ static int descriptor_lua(lua_State *L)
 
 static int buffer_lua(lua_State *L)
 {
-    size_t size;
+    size_t size     = 0;
     lmagic_t *magic = luaL_checkudata(L, 1, MODULE_MT);
     const char *buf = luaL_checklstring(L, 2, &size);
 
@@ -233,10 +233,9 @@ static int getpath_lua(lua_State *L)
 
 static int open_lua(lua_State *L)
 {
-    int argc           = lua_gettop(L);
-    int flgs           = MAGIC_NONE;
-    lmagic_t *magic    = NULL;
-    const char *errbuf = NULL;
+    int argc        = lua_gettop(L);
+    int flgs        = MAGIC_NONE;
+    lmagic_t *magic = NULL;
 
     if (argc > 0) {
         int i = 1;
@@ -246,19 +245,15 @@ static int open_lua(lua_State *L)
         }
     }
 
-    if (!(mgc = magic_open(flgs))) {
-        errbuf = strerror(errno);
-    } else if (!(magic = lua_newuserdata(L, sizeof(lmagic_t)))) {
-        errbuf = lua_tostring(L, -1);
-        magic_close(mgc);
-    } else {
-        magic->mgc = mgc;
-        luaL_getmetatable(L, MODULE_MT);
-        lua_setmetatable(L, -2);
-        return 1;
+    magic      = lua_newuserdata(L, sizeof(lmagic_t));
+    magic->mgc = magic_open(flgs);
+    if (!magic->mgc) {
+        return luaL_error(L, "failed to magic.open() - %s", strerror(errno));
     }
 
-    return luaL_error(L, "failed to magic.open() - %s", errbuf);
+    luaL_getmetatable(L, MODULE_MT);
+    lua_setmetatable(L, -2);
+    return 1;
 }
 
 LUALIB_API int luaopen_magic(lua_State *L)
