@@ -28,6 +28,8 @@
 #include "config.h"
 #include <errno.h>
 #include <lauxlib.h>
+#include <lualib.h>
+#include <stdio.h>
 #include <string.h>
 
 // MARK: lua binding
@@ -67,6 +69,22 @@ static int descriptor_lua(lua_State *L)
     int fd          = luaL_checkinteger(L, 2);
 
     lua_pushstring(L, magic_descriptor(magic->mgc, fd));
+
+    return 1;
+}
+
+static int filehandle_lua(lua_State *L)
+{
+    lmagic_t *magic = luaL_checkudata(L, 1, MODULE_MT);
+
+#if LUA_VERSION_NUM >= 502
+    luaL_Stream *stream = luaL_checkudata(L, 2, LUA_FILEHANDLE);
+    FILE *fp            = stream->f;
+#else
+    FILE *fp = *(FILE **)luaL_checkudata(L, 2, LUA_FILEHANDLE);
+#endif
+
+    lua_pushstring(L, magic_descriptor(magic->mgc, fileno(fp)));
 
     return 1;
 }
@@ -268,6 +286,7 @@ LUALIB_API int luaopen_magic(lua_State *L)
   // method
         {"file",       file_lua      },
         {"descriptor", descriptor_lua},
+        {"filehandle", filehandle_lua},
         {"buffer",     buffer_lua    },
         {"error",      error_lua     },
         {"setFlags",   setflags_lua  },
