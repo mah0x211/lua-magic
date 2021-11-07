@@ -218,30 +218,6 @@ static int newindex_lua(lua_State *L)
     return luaL_error(L, "could not change member of instance");
 }
 
-static void define_mt(lua_State *L, struct luaL_Reg mmethod[],
-                      struct luaL_Reg method[])
-{
-    int i = 0;
-
-    // create table __metatable
-    luaL_newmetatable(L, MODULE_MT);
-    // metamethods
-    while (mmethod[i].name) {
-        push_fn2tbl(L, mmethod[i].name, mmethod[i].func);
-        i++;
-    }
-    // methods
-    lua_pushstring(L, "__index");
-    lua_newtable(L);
-    i = 0;
-    while (method[i].name) {
-        push_fn2tbl(L, method[i].name, method[i].func);
-        i++;
-    }
-    lua_rawset(L, -3);
-    lua_pop(L, 1);
-}
-
 static int getpath_lua(lua_State *L)
 {
     lua_pushstring(L, magic_getpath(DEFAULT_LUA_MAGIC_FILE, 0));
@@ -276,32 +252,43 @@ static int open_lua(lua_State *L)
 
 LUALIB_API int luaopen_magic(lua_State *L)
 {
-    struct luaL_Reg mmethod[] = {
-        {"__gc",       gc_lua      },
-        {"__tostring", tostring_lua},
-        {"__newindex", newindex_lua},
-        {NULL,         NULL        }
-    };
-    struct luaL_Reg method[] = {
-  // method
-        {"file",       file_lua      },
-        {"descriptor", descriptor_lua},
-        {"filehandle", filehandle_lua},
-        {"buffer",     buffer_lua    },
-        {"error",      error_lua     },
-        {"setFlags",   setflags_lua  },
-        {"load",       load_lua      },
-        {"compile",    compile_lua   },
-        {"check",      check_lua     },
-        {"list",       list_lua      },
-        {"errno",      errno_lua     },
-        {NULL,         NULL          }
-    };
+    if (luaL_newmetatable(L, MODULE_MT)) {
+        struct luaL_Reg mmethod[] = {
+            {"__gc",       gc_lua      },
+            {"__tostring", tostring_lua},
+            {"__newindex", newindex_lua},
+            {NULL,         NULL        }
+        };
+        struct luaL_Reg method[] = {
+            {"file",       file_lua      },
+            {"descriptor", descriptor_lua},
+            {"filehandle", filehandle_lua},
+            {"buffer",     buffer_lua    },
+            {"error",      error_lua     },
+            {"setFlags",   setflags_lua  },
+            {"load",       load_lua      },
+            {"compile",    compile_lua   },
+            {"check",      check_lua     },
+            {"list",       list_lua      },
+            {"errno",      errno_lua     },
+            {NULL,         NULL          }
+        };
+        struct luaL_Reg *ptr = mmethod;
 
-    // create metatable
-    define_mt(L, mmethod, method);
+        for (; ptr->name; ptr++) {
+            push_fn2tbl(L, ptr->name, ptr->func);
+        }
+        // methods
+        lua_pushstring(L, "__index");
+        lua_newtable(L);
+        for (ptr = method; ptr->name; ptr++) {
+            push_fn2tbl(L, ptr->name, ptr->func);
+        }
+        lua_rawset(L, -3);
+        lua_pop(L, 1);
+    }
 
-    // register
+    // export functions and constants
     lua_newtable(L);
     // functions
     push_fn2tbl(L, "getpath", getpath_lua);
