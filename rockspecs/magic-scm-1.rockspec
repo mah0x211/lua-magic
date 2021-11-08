@@ -1,17 +1,17 @@
+rockspec_format = "3.0"
 package = "magic"
 version = "scm-1"
 source = {
-    url = "gitrec://github.com/mah0x211/lua-magic.git"
+    url = "git+https://github.com/mah0x211/lua-magic.git"
 }
 description = {
     summary = "bindings for libmagic",
     homepage = "https://github.com/mah0x211/lua-magic",
     license = "MIT/X11",
-    maintainer = "Masatoshi Teruya"
+    maintainer = "Masatoshi Fukunaga"
 }
 dependencies = {
     "lua >= 5.1",
-    "luarocks-fetch-gitrec >= 0.2"
 }
 build = {
     type = "command",
