@@ -290,6 +290,7 @@ LUALIB_API int luaopen_magic(lua_State *L)
 
     // export functions and constants
     lua_newtable(L);
+    push_int2tbl(L, "VERSION", MAGIC_VERSION);
     // functions
     push_fn2tbl(L, "getpath", getpath_lua);
     push_fn2tbl(L, "open", open_lua);
@@ -309,6 +310,8 @@ LUALIB_API int luaopen_magic(lua_State *L)
     push_int2tbl(L, "MIME", MAGIC_MIME);
     push_int2tbl(L, "APPLE", MAGIC_APPLE);
     push_int2tbl(L, "EXTENSION", MAGIC_EXTENSION);
+    push_int2tbl(L, "COMPRESS_TRANSP", MAGIC_COMPRESS_TRANSP);
+    push_int2tbl(L, "NODESC", MAGIC_NODESC);
 
     push_int2tbl(L, "NO_CHECK_COMPRESS", MAGIC_NO_CHECK_COMPRESS);
     push_int2tbl(L, "NO_CHECK_TAR", MAGIC_NO_CHECK_TAR);
@@ -319,6 +322,7 @@ LUALIB_API int luaopen_magic(lua_State *L)
     push_int2tbl(L, "NO_CHECK_CDF", MAGIC_NO_CHECK_CDF);
     push_int2tbl(L, "NO_CHECK_TOKENS", MAGIC_NO_CHECK_TOKENS);
     push_int2tbl(L, "NO_CHECK_ENCODING", MAGIC_NO_CHECK_ENCODING);
+    push_int2tbl(L, "NO_CHECK_JSON", MAGIC_NO_CHECK_JSON);
     // backwards copatibility(rename)
     push_int2tbl(L, "NO_CHECK_ASCII", MAGIC_NO_CHECK_ASCII);
     // backwards copatibility(do nothing)

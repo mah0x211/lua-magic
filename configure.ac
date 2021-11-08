@@ -42,6 +42,12 @@ AC_CHECK_HEADERS(
 #
 AC_CHECK_LIB([z], [inflate], [], [AC_MSG_ERROR(library libz not found.)])
 
+#
+# checking optional libraries
+#
+AC_CHECK_LIB([bz2], [BZ2_bzCompressInit])
+AC_CHECK_LIB([lzma], [lzma_stream_decoder])
+AC_CHECK_LIB([seccomp], [seccomp_init])
 
 AC_CONFIG_FILES([ \
     Makefile \
