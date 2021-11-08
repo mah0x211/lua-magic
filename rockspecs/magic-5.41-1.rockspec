@@ -1,8 +1,9 @@
 rockspec_format = "3.0"
 package = "magic"
-version = "scm-1"
+version = "5.41-1"
 source = {
-    url = "git+https://github.com/mah0x211/lua-magic.git"
+    url = "git+https://github.com/mah0x211/lua-magic.git",
+    tag = "v5.41"
 }
 description = {
     summary = "bindings for libmagic",
