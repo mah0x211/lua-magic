@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// MARK: lua binding
 #define MODULE_MT "magic"
 
 static inline void push_fn2tbl(lua_State *L, const char *k, lua_CFunction f)
@@ -57,8 +56,16 @@ static int file_lua(lua_State *L)
 {
     lmagic_t *magic  = luaL_checkudata(L, 1, MODULE_MT);
     const char *path = luaL_checkstring(L, 2);
+    const char *desc = magic_file(magic->mgc, path);
 
-    lua_pushstring(L, magic_file(magic->mgc, path));
+    if (desc) {
+        lua_pushstring(L, desc);
+        return 1;
+    }
+
+    // got error
+    lua_pushnil(L);
+    lua_pushstring(L, magic_error(magic->mgc));
 
     return 1;
 }
@@ -94,17 +101,30 @@ static int buffer_lua(lua_State *L)
     size_t size     = 0;
     lmagic_t *magic = luaL_checkudata(L, 1, MODULE_MT);
     const char *buf = luaL_checklstring(L, 2, &size);
+    const char *res = magic_buffer(magic->mgc, buf, size);
 
-    lua_pushstring(L, magic_buffer(magic->mgc, buf, size));
+    if (res) {
+        lua_pushstring(L, res);
+        return 1;
+    }
 
-    return 1;
+    // got error
+    lua_pushnil(L);
+    lua_pushstring(L, magic_error(magic->mgc));
+
+    return 2;
 }
 
 static int error_lua(lua_State *L)
 {
     lmagic_t *magic = luaL_checkudata(L, 1, MODULE_MT);
+    const char *msg = magic_error(magic->mgc);
 
-    lua_pushstring(L, magic_error(magic->mgc));
+    if (msg) {
+        lua_pushstring(L, msg);
+    } else {
+        lua_pushnil(L);
+    }
 
     return 1;
 }
@@ -116,76 +136,53 @@ static int setflags_lua(lua_State *L)
     int flgs        = MAGIC_NONE;
 
     if (argc > 1) {
-        int i = 2;
-
-        for (; i <= argc; i++) {
+        for (int i = 2; i <= argc; i++) {
             flgs |= luaL_checkinteger(L, i);
         }
     }
+    lua_pushboolean(L, magic_setflags(magic->mgc, flgs) == 0);
+    return 1;
+}
 
-    lua_pushinteger(L, magic_setflags(magic->mgc, flgs));
+typedef int (*patharg_fn)(magic_t, const char *);
+
+static inline int patharg_lua(lua_State *L, patharg_fn fn, const char *path)
+{
+    lmagic_t *magic = luaL_checkudata(L, 1, MODULE_MT);
+
+    if (fn(magic->mgc, path) == 0) {
+        lua_pushboolean(L, 1);
+        return 1;
+    }
+
+    // got error
+    lua_pushboolean(L, 0);
+    lua_pushstring(L, magic_error(magic->mgc));
 
     return 1;
 }
 
 static int load_lua(lua_State *L)
 {
-    int argc         = lua_gettop(L);
-    lmagic_t *magic  = luaL_checkudata(L, 1, MODULE_MT);
-    const char *path = DEFAULT_LUA_MAGIC_FILE;
-
-    if (argc > 1) {
-        path = luaL_checkstring(L, 2);
-    }
-
-    lua_pushinteger(L, magic_load(magic->mgc, path));
-
-    return 1;
+    return patharg_lua(L, &magic_load,
+                       luaL_optstring(L, 2, DEFAULT_LUA_MAGIC_FILE));
 }
 
 static int compile_lua(lua_State *L)
 {
-    int argc         = lua_gettop(L);
-    lmagic_t *magic  = luaL_checkudata(L, 1, MODULE_MT);
-    const char *path = NULL;
-
-    if (argc > 1) {
-        path = luaL_checkstring(L, 2);
-    }
-
-    lua_pushinteger(L, magic_compile(magic->mgc, path));
-
-    return 1;
+    return patharg_lua(L, &magic_compile, luaL_checkstring(L, 2));
 }
 
 static int check_lua(lua_State *L)
 {
-    int argc         = lua_gettop(L);
-    lmagic_t *magic  = luaL_checkudata(L, 1, MODULE_MT);
-    const char *path = DEFAULT_LUA_MAGIC_FILE;
-
-    if (argc > 1) {
-        path = luaL_checkstring(L, 2);
-    }
-
-    lua_pushinteger(L, magic_check(magic->mgc, path));
-
-    return 1;
+    return patharg_lua(L, &magic_check,
+                       luaL_optstring(L, 2, DEFAULT_LUA_MAGIC_FILE));
 }
 
 static int list_lua(lua_State *L)
 {
-    int argc         = lua_gettop(L);
-    lmagic_t *magic  = luaL_checkudata(L, 1, MODULE_MT);
-    const char *path = DEFAULT_LUA_MAGIC_FILE;
-
-    if (argc > 1) {
-        path = luaL_checkstring(L, 2);
-    }
-
-    lua_pushinteger(L, magic_list(magic->mgc, path));
-
-    return 1;
+    return patharg_lua(L, &magic_list,
+                       luaL_optstring(L, 2, DEFAULT_LUA_MAGIC_FILE));
 }
 
 static int errno_lua(lua_State *L)
@@ -220,7 +217,13 @@ static int newindex_lua(lua_State *L)
 
 static int getpath_lua(lua_State *L)
 {
-    lua_pushstring(L, magic_getpath(DEFAULT_LUA_MAGIC_FILE, 0));
+    const char *filename = magic_getpath(DEFAULT_LUA_MAGIC_FILE, 0);
+
+    if (filename) {
+        lua_pushstring(L, filename);
+    } else {
+        lua_pushnil(L);
+    }
 
     return 1;
 }
@@ -228,26 +231,26 @@ static int getpath_lua(lua_State *L)
 static int open_lua(lua_State *L)
 {
     int argc        = lua_gettop(L);
+    lmagic_t *magic = lua_newuserdata(L, sizeof(lmagic_t));
     int flgs        = MAGIC_NONE;
-    lmagic_t *magic = NULL;
 
     if (argc > 0) {
-        int i = 1;
-
-        for (; i <= argc; i++) {
-            flgs |= luaL_checkinteger(L, i);
+        for (int i = 1; i <= argc; i++) {
+            flgs |= luaL_optinteger(L, i, 0);
         }
     }
 
-    magic      = lua_newuserdata(L, sizeof(lmagic_t));
-    magic->mgc = magic_open(flgs);
-    if (!magic->mgc) {
-        return luaL_error(L, "failed to magic.open() - %s", strerror(errno));
+    if ((magic->mgc = magic_open(flgs))) {
+        luaL_getmetatable(L, MODULE_MT);
+        lua_setmetatable(L, -2);
+        return 1;
     }
 
-    luaL_getmetatable(L, MODULE_MT);
-    lua_setmetatable(L, -2);
-    return 1;
+    // got error
+    lua_pushnil(L);
+    lua_pushstring(L, strerror(errno));
+
+    return 2;
 }
 
 LUALIB_API int luaopen_magic(lua_State *L)
@@ -265,7 +268,7 @@ LUALIB_API int luaopen_magic(lua_State *L)
             {"filehandle", filehandle_lua},
             {"buffer",     buffer_lua    },
             {"error",      error_lua     },
-            {"setFlags",   setflags_lua  },
+            {"setflags",   setflags_lua  },
             {"load",       load_lua      },
             {"compile",    compile_lua   },
             {"check",      check_lua     },
