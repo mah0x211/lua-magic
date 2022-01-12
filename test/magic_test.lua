@@ -1,5 +1,4 @@
 local magic = require('magic')
-local assert = require('assertex')
 local testcase = require('testcase')
 
 function testcase.getpath()
