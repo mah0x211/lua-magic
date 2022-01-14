@@ -3,6 +3,7 @@ lua-magic
 
 [![test](https://github.com/mah0x211/lua-magic/actions/workflows/test.yml/badge.svg)](https://github.com/mah0x211/lua-magic/actions/workflows/test.yml)
 
+**MODULE HAS BEEN RENAMED TO https://github.com/mah0x211/lua-libmagic**
 
 `libmagic` binding for lua.  
 see `man libmagic` for more details.
